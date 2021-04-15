@@ -1,17 +1,17 @@
 import numpy as np
 import math
-import matplotlib.pyplot as plt
-from matplotlib.ticker import PercentFormatter
-from sklearn.neighbors import KNeighborsClassifier as KNN
-from sklearn.ensemble import RandomForestClassifier as RFC
+# import matplotlib.pyplot as plt
+# from matplotlib.ticker import PercentFormatter
+# from sklearn.neighbors import KNeighborsClassifier as KNN
+# from sklearn.ensemble import RandomForestClassifier as RFC
 
 def main():
-    # patients = process_file("cleveland.data")
+    process_file("cleveland.data", "my.data")
 
     # Get the first 14 features of 297 samples
     patients = read_file('processed.cleveland.data', 297, range(14))
 
-    # display(patients)
+    display(patients)
 
     kclf = KNN(n_neighbors=5)
     z = trainAndTest(patients, kclf)
@@ -124,7 +124,7 @@ def read_file(fileName, n, features):
     return data
             
 
-def process_file(fileName):
+def process_file(readFilename, writeFilename):
     # TODO: Modify function to write to processed file instead of returning data
     # 303 patients with 76 data points
     # data after the 282nd patient seems to be corrupted
@@ -132,16 +132,13 @@ def process_file(fileName):
     patients = np.zeros((282, 14))
 
     # file = open(fileName, "r", errors='ignore')
-    file = open(fileName, "r", encoding='ISO-8859-1')
+    readFile = open(readFilename, "r", encoding='ISO-8859-1')
 
     # read contents of file into a string
-    contents = file.read()
+    contents = readFile.read()
 
     # split string by space and newlines
-    contents = contents.replace("\n", " ")
-    print(contents)
-    print()
-    split_contents = contents.split()  # this seems to sprinkle \x00 values in the array
+    split_contents = contents.replace("\n", " ").split()
 
     name_count = 0
     p_num = 0
@@ -180,8 +177,19 @@ def process_file(fileName):
         patients[i][13] = patient[57]  # num (predicted atttribute)
         i += 1
 
-    file.close()
-    return patients
+    # write into file
+    writeFile = open(writeFilename, "a")
+    for patient in patients:
+        for iter in range(np.size(patient)):
+            writeFile.write(str(patient[iter]))
+
+            if iter < np.size(patient) - 1:
+                writeFile.write(",")
+
+        writeFile.write("\n")
+
+    readFile.close()
+    writeFile.close()
 
 if __name__ == "__main__":
     main()
