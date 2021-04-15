@@ -5,11 +5,13 @@ from matplotlib.ticker import PercentFormatter
 from sklearn.neighbors import KNeighborsClassifier as KNN
 from sklearn.ensemble import RandomForestClassifier as RFC
 
+
 def main():
     process_file("cleveland.data", "processed_test.data")
 
     # Get the first 14 features of 297 samples
-    patients = read_file('processed.cleveland.data', 297, range(14))
+    # patients = read_file('processed.cleveland.data', 297, range(14))
+    patients = read_file('processed_test.data', 282, range(14))
 
     display(patients)
 
@@ -17,9 +19,10 @@ def main():
     z = trainAndTest(patients, kclf)
     print(z)
 
-    rclf  = RFC()
+    rclf = RFC()
     z = trainAndTest(patients, rclf)
     print(z)
+
 
 def trainAndTest(data, model):
     '''
@@ -29,8 +32,8 @@ def trainAndTest(data, model):
             data (n samples x d features numpy array)
             model (sklearn-object)
     '''
-    X = data[:,:13]
-    y = data[:,13]
+    X = data[:, :13]
+    y = data[:, 13]
     n, d = np.shape(X)
 
     folds = 5
@@ -51,6 +54,7 @@ def trainAndTest(data, model):
         z[i] = z[i] / len(T)
     return z
 
+
 def display(data):
     '''
         Displays various charts and graphs to analyze data
@@ -59,7 +63,7 @@ def display(data):
             data (n samples x d features numpy array)
     '''
     # Relevant histograms (Use features list to set histograms)
-    FEATURES = range(1,2)
+    FEATURES = range(1, 2)
     fig, axs = plt.subplots(len(FEATURES), 1)
 
     # MatPlotLib caveat
@@ -82,6 +86,7 @@ def display(data):
                         top=0.9, wspace=0.4, hspace=0.4)
     plt.show()
 
+
 def get_samples(data, feature, val):
     '''
         Gets samples of data where feature matches value
@@ -92,6 +97,7 @@ def get_samples(data, feature, val):
             val: expected value of feature
     '''
     return data[data[:, feature] == val, :]
+
 
 def read_file(fileName, n, features):
     '''
@@ -122,10 +128,9 @@ def read_file(fileName, n, features):
                 else:
                     print("Warning: Unexpected value on line {}.".format(i))
     return data
-            
+
 
 def process_file(readFilename, writeFilename):
-    # TODO: Modify function to write to processed file instead of returning data
     # 303 patients with 76 data points
     # data after the 282nd patient seems to be corrupted
     patients_all_attr = np.zeros((282, 76))
@@ -190,6 +195,7 @@ def process_file(readFilename, writeFilename):
 
     readFile.close()
     writeFile.close()
+
 
 if __name__ == "__main__":
     main()
