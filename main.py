@@ -8,20 +8,20 @@ def main():
     # Get the first 14 features of 297 samples
     patients = read_file('processed.cleveland.data', 297, range(14))
 
-    # Relevant histograms (uncomment intended distribution to analyze)
-    features = range(2,4)
-    fig, axs = plt.subplots(len(features), 1)
+    # Relevant histograms (Use features list to set histograms)
+    FEATURES = range(2,4)
+    fig, axs = plt.subplots(len(FEATURES), 1)
 
     for i in range(len(axs)):
         # Feature without heart disease
         colors = ['orange', 'blue']
         labels = ['With heart disease', 'Without heart disease']
-        axs[i].hist(get_samples(patients, 13, 0)[:, features[i]],
+        axs[i].hist(get_samples(patients, 13, 0)[:, FEATURES[i]],
                     density=True, color=colors[0], label=labels[0])
-        axs[i].hist(get_samples(patients, 13, 1)[:, features[i]],
+        axs[i].hist(get_samples(patients, 13, 1)[:, FEATURES[i]],
                     density=True, alpha=0.5, color=colors[1], label=labels[1])
         axs[i].legend()
-        axs[i].set_xlabel('Value Feature {}'.format(features[i]))
+        axs[i].set_xlabel('Value of Feature {}'.format(FEATURES[i]))
         axs[i].yaxis.set_major_formatter(PercentFormatter(xmax=1))
         axs[i].grid(True)
 
