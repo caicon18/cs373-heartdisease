@@ -9,13 +9,15 @@ from matplotlib.ticker import PercentFormatter
 from sklearn.neighbors import KNeighborsClassifier as KNN
 from sklearn.tree import DecisionTreeClassifier as DTC
 
+
 def main():
-    # patients = process_file("cleveland.data")
+    process_file("cleveland.data", "processed_test.data")
 
     # Get the first 14 features of 297 samples
-    patients = read_file('processed.cleveland.data', 297, range(14))
+    # patients = read_file('processed.cleveland.data', 297, range(14))
+    patients = read_file('processed_test.data', 282, range(14))
 
-    # display(patients)
+    display(patients)
 
     # Hyperparameter tuning of KNN approach
     k_params = range(1,15)
@@ -49,8 +51,8 @@ def trainAndTest(data, model):
             data (n samples x d features numpy array)
             model (sklearn-object)
     '''
-    X = data[:,:13]
-    y = data[:,13]
+    X = data[:, :13]
+    y = data[:, 13]
     n, d = np.shape(X)
 
     folds = 5
@@ -71,6 +73,7 @@ def trainAndTest(data, model):
         z[i] = z[i] / len(T)
     return z
 
+
 def display(data):
     '''
         Displays various charts and graphs to analyze data
@@ -79,7 +82,7 @@ def display(data):
             data (n samples x d features numpy array)
     '''
     # Relevant histograms (Use features list to set histograms)
-    FEATURES = range(1,2)
+    FEATURES = range(1, 2)
     fig, axs = plt.subplots(len(FEATURES), 1)
 
     # MatPlotLib caveat
@@ -102,6 +105,7 @@ def display(data):
                         top=0.9, wspace=0.4, hspace=0.4)
     plt.show()
 
+
 def get_samples(data, feature, val):
     '''
         Gets samples of data where feature matches value
@@ -112,6 +116,7 @@ def get_samples(data, feature, val):
             val: expected value of feature
     '''
     return data[data[:, feature] == val, :]
+
 
 def read_file(fileName, n, features):
     '''
@@ -142,26 +147,22 @@ def read_file(fileName, n, features):
                 else:
                     print("Warning: Unexpected value on line {}.".format(i))
     return data
-            
 
-def process_file(fileName):
-    # TODO: Modify function to write to processed file instead of returning data
+
+def process_file(readFilename, writeFilename):
     # 303 patients with 76 data points
     # data after the 282nd patient seems to be corrupted
     patients_all_attr = np.zeros((282, 76))
     patients = np.zeros((282, 14))
 
     # file = open(fileName, "r", errors='ignore')
-    file = open(fileName, "r", encoding='ISO-8859-1')
+    readFile = open(readFilename, "r", encoding='ISO-8859-1')
 
     # read contents of file into a string
-    contents = file.read()
+    contents = readFile.read()
 
     # split string by space and newlines
-    contents = contents.replace("\n", " ")
-    print(contents)
-    print()
-    split_contents = contents.split()  # this seems to sprinkle \x00 values in the array
+    split_contents = contents.replace("\n", " ").split()
 
     name_count = 0
     p_num = 0
@@ -200,8 +201,20 @@ def process_file(fileName):
         patients[i][13] = patient[57]  # num (predicted atttribute)
         i += 1
 
-    file.close()
-    return patients
+    # write into file
+    writeFile = open(writeFilename, "w")
+    for patient in patients:
+        for iter in range(np.size(patient)):
+            writeFile.write(str(patient[iter]))
+
+            if iter < np.size(patient) - 1:
+                writeFile.write(",")
+
+        writeFile.write("\n")
+
+    readFile.close()
+    writeFile.close()
+
 
 if __name__ == "__main__":
     main()
