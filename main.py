@@ -7,7 +7,6 @@ def main():
     patients = read_file('processed.cleveland.data', 350, range(14))
 
     print(patients)
-    return 0
 
 def read_file(fileName, n, features):
     '''
@@ -101,4 +100,5 @@ def process_file(fileName):
     return patients
 
 
-main()
+if __name__ == "__main__":
+    main()
