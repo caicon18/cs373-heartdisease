@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def main():
     patients = process_file("cleveland.data")
 
