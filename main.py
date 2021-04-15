@@ -1,6 +1,9 @@
 import numpy as np
+import math
 import matplotlib.pyplot as plt
 from matplotlib.ticker import PercentFormatter
+from sklearn.neighbors import KNeighborsClassifier as KNN
+from sklearn.ensemble import RandomForestClassifier as RFC
 
 def main():
     # patients = process_file("cleveland.data")
@@ -8,20 +11,66 @@ def main():
     # Get the first 14 features of 297 samples
     patients = read_file('processed.cleveland.data', 297, range(14))
 
+    # display(patients)
+
+    neigh = KNN(n_neighbors=5)
+    z = trainAndTest(patients, neigh)
+    print(z)
+
+def trainAndTest(data, model):
+    '''
+        Trains on data using model and tests using 5-fold-cross-validation
+
+        Parameters:
+            data (n samples x d features numpy array)
+            model (sklearn-object)
+    '''
+    X = data[:,:13]
+    y = data[:,13]
+    n, d = np.shape(X)
+
+    folds = 5
+    z = np.zeros(folds)
+    for i in range(folds):
+        a = math.ceil(i * n / folds)
+        b = math.floor((i + 1) * n / folds)
+        T = np.arange(a, b, dtype=int)
+        S = np.setdiff1d(np.arange(0, n), T)
+        X_train = X[S]
+        y_train = y[S]
+        model.fit(X_train, y_train)
+        for t in T:
+            X_test = X[t, None]
+            y_test = model.predict(X_test)
+            if y[t] != y_test:
+                z[i] += 1
+        z[i] = z[i] / len(T)
+    return z
+
+def display(data):
+    '''
+        Displays various charts and graphs to analyze data
+
+        Parameters:
+            data (n samples x d features numpy array)
+    '''
     # Relevant histograms (Use features list to set histograms)
-    FEATURES = range(2,4)
+    FEATURES = range(1,2)
     fig, axs = plt.subplots(len(FEATURES), 1)
+
+    # MatPlotLib caveat
+    if len(FEATURES) == 1:
+        axs = [axs]
 
     colors = ['orange', 'blue']
     labels = ['With heart disease', 'Without heart disease']
     for i in range(len(axs)):
-        axs[i].hist(get_samples(patients, 13, 0)[:, FEATURES[i]],
+        axs[i].hist(get_samples(data, 13, 0)[:, FEATURES[i]],
                     density=True, color=colors[0], label=labels[0])
-        axs[i].hist(get_samples(patients, 13, 1)[:, FEATURES[i]],
+        axs[i].hist(get_samples(data, 13, 1)[:, FEATURES[i]],
                     density=True, alpha=0.5, color=colors[1], label=labels[1])
         axs[i].legend()
-        axs[i].set_xlabel('Value of Feature {}'.format(FEATURES[i]))
-        axs[i].yaxis.set_major_formatter(PercentFormatter(xmax=1))
+        axs[i].set_xlabel('Value of Feature {}'.format(FEATURES[i] + 1))
         axs[i].grid(True)
 
     # Show any plots created
@@ -53,7 +102,6 @@ def read_file(fileName, n, features):
         Returns:
             data (n x len(features) numpy array): samples read from CSV file
     '''
-
     data = np.zeros((n, len(features)))
     with open(fileName, 'r', encoding='ISO-8859-1') as f:
         for i in range(n):
@@ -130,7 +178,6 @@ def process_file(fileName):
 
     file.close()
     return patients
-
 
 if __name__ == "__main__":
     main()
