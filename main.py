@@ -1,12 +1,12 @@
 import numpy as np
 import math
-# import matplotlib.pyplot as plt
-# from matplotlib.ticker import PercentFormatter
-# from sklearn.neighbors import KNeighborsClassifier as KNN
-# from sklearn.ensemble import RandomForestClassifier as RFC
+import matplotlib.pyplot as plt
+from matplotlib.ticker import PercentFormatter
+from sklearn.neighbors import KNeighborsClassifier as KNN
+from sklearn.ensemble import RandomForestClassifier as RFC
 
 def main():
-    process_file("cleveland.data", "my.data")
+    process_file("cleveland.data", "processed_test.data")
 
     # Get the first 14 features of 297 samples
     patients = read_file('processed.cleveland.data', 297, range(14))
@@ -178,7 +178,7 @@ def process_file(readFilename, writeFilename):
         i += 1
 
     # write into file
-    writeFile = open(writeFilename, "a")
+    writeFile = open(writeFilename, "w")
     for patient in patients:
         for iter in range(np.size(patient)):
             writeFile.write(str(patient[iter]))
