@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import PercentFormatter
 from sklearn.neighbors import KNeighborsClassifier as KNN
 from sklearn.tree import DecisionTreeClassifier as DTC
+from sklearn.preprocessing import StandardScaler
 
 
 def main():
@@ -54,12 +55,15 @@ def trainAndTest(data, model):
     X = data[:, :13]
     y = data[:, 13]
     n, d = np.shape(X)
-
     folds = 5
     z = np.zeros(folds)
+
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X)
+
     for i in range(folds):
         a = math.ceil(i * n / folds)
-        b = math.floor((i + 1) * n / folds)
+        b = math.floor((i + 1) * n / folds - 1)
         T = np.arange(a, b, dtype=int)
         S = np.setdiff1d(np.arange(0, n), T)
         X_train = X[S]
@@ -71,6 +75,7 @@ def trainAndTest(data, model):
             if y[t] != y_test:
                 z[i] += 1
         z[i] = z[i] / len(T)
+
     return z
 
 
