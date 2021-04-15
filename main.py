@@ -1,9 +1,13 @@
+""""
+
+"""
+
 import numpy as np
 import math
 import matplotlib.pyplot as plt
 from matplotlib.ticker import PercentFormatter
 from sklearn.neighbors import KNeighborsClassifier as KNN
-from sklearn.ensemble import RandomForestClassifier as RFC
+from sklearn.tree import DecisionTreeClassifier as DTC
 
 def main():
     # patients = process_file("cleveland.data")
@@ -13,13 +17,29 @@ def main():
 
     # display(patients)
 
-    kclf = KNN(n_neighbors=5)
-    z = trainAndTest(patients, kclf)
-    print(z)
+    # Hyperparameter tuning of KNN approach
+    k_params = range(1,15)
+    min_k = None
+    min_error = 1
+    for k in k_params:
+        kclf = KNN(n_neighbors=k)
+        error = np.mean(trainAndTest(patients, kclf))
+        if error < min_error:
+            min_error = error
+            min_k = k
+    print("KNN error: {} with k = {}".format(min_error, min_k))
 
-    rclf  = RFC()
-    z = trainAndTest(patients, rclf)
-    print(z)
+    # Hyperparameter tuning of Decision Tree approach 
+    max_depth_params = range(1,14)
+    min_max_depth = None
+    min_error = 1
+    for max_depth in max_depth_params:
+        tclf  = DTC(max_depth=max_depth)
+        error = np.mean(trainAndTest(patients, tclf))
+        if error < min_error:
+            min_error = error
+            min_max_depth = max_depth
+    print("Tree Classifier error: {} with max_depth = {}".format(min_error, min_max_depth))
 
 def trainAndTest(data, model):
     '''
