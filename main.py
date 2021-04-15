@@ -1,13 +1,53 @@
+"""
+
+
+"""
+
 import numpy as np
 
 def main():
-    patients = process_file("cleveland.data")
+    # patients = process_file("cleveland.data")
+
+    # Get the first 14 features of 297 samples
+    patients = read_file('processed.cleveland.data', 350, range(14))
 
     print(patients)
     return 0
 
+def read_file(fileName, n, features):
+    '''
+        Reads data from a preprocessed file into a numpy array
+
+        Parameters:
+            fileName: CSV file containing samples by row and features by comma
+            n: number of samples intended to read
+            features: list of features to be used
+                      (e.g. [0, 2, 4] would only get features 0, 2 and 4)
+
+        Returns:
+            data (n x len(features) numpy array): samples read from CSV file
+    '''
+
+    data = np.zeros((n, len(features)))
+    with open(fileName, 'r', encoding='ISO-8859-1') as f:
+        for i in range(n):
+            try:
+                # Convert each line into a numpy array of floats
+                vals = np.array(f.readline().split(',')).astype(np.float)
+                data[i] = vals[features]
+            except ValueError:
+                # Discard line and warn of value error
+                if f.readline() == '':
+                    print("EOF reached, only read {} of {} samples".format(i, n))
+                    data = np.delete(data, range(i, n), 0)
+                    break
+                else:
+                    print("Warning: Unexpected value on line {}.".format(i))
+    return data
+            
 
 def process_file(fileName):
+    # TODO: Modify function to write to processed file instead of returning data
     # 303 patients with 76 data points
     # data after the 282nd patient seems to be corrupted
     patients_all_attr = np.zeros((282, 76))
