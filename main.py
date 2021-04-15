@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import PercentFormatter
 
 def main():
     # patients = process_file("cleveland.data")
@@ -7,24 +8,31 @@ def main():
     # Get the first 14 features of 297 samples
     patients = read_file('processed.cleveland.data', 297, range(14))
 
-    # Age histogram
-    # plt.hist(patients[:,0])
+    # Relevant histograms (uncomment intended distribution to analyze)
+    features = range(2,4)
+    fig, axs = plt.subplots(len(features), 1)
 
-    # Chest-pain type histogram
-    # plt.hist(patients[:, 2])
-
-    # Resting blood pressure (in mm Hg) with heart disease histogram
-    plt.hist(get_rows(patients, 13, 1)[:, 3])
-
-    # Resting blood pressure (in mm Hg) without heart disease histogram
-    plt.hist(get_rows(patients, 13, 0)[:, 3])
+    for i in range(len(axs)):
+        # Feature without heart disease
+        colors = ['orange', 'blue']
+        labels = ['With heart disease', 'Without heart disease']
+        axs[i].hist(get_samples(patients, 13, 0)[:, features[i]],
+                    density=True, color=colors[0], label=labels[0])
+        axs[i].hist(get_samples(patients, 13, 1)[:, features[i]],
+                    density=True, alpha=0.5, color=colors[1], label=labels[1])
+        axs[i].legend()
+        axs[i].set_xlabel('Value Feature {}'.format(features[i]))
+        axs[i].yaxis.set_major_formatter(PercentFormatter(xmax=1))
+        axs[i].grid(True)
 
     # Show any plots created
+    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9,
+                        top=0.9, wspace=0.4, hspace=0.4)
     plt.show()
 
-def get_rows(data, feature, val):
+def get_samples(data, feature, val):
     '''
-        Gets rows of numpy array where feature matches value
+        Gets samples of data where feature matches value
 
         Parameters:
             data: original numpy array
