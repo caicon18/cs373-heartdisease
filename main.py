@@ -13,8 +13,12 @@ def main():
 
     # display(patients)
 
-    neigh = KNN(n_neighbors=5)
-    z = trainAndTest(patients, neigh)
+    kclf = KNN(n_neighbors=5)
+    z = trainAndTest(patients, kclf)
+    print(z)
+
+    rclf  = RFC()
+    z = trainAndTest(patients, rclf)
     print(z)
 
 def trainAndTest(data, model):
