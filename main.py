@@ -1,12 +1,37 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 def main():
     # patients = process_file("cleveland.data")
 
     # Get the first 14 features of 297 samples
-    patients = read_file('processed.cleveland.data', 350, range(14))
+    patients = read_file('processed.cleveland.data', 297, range(14))
 
-    print(patients)
+    # Age histogram
+    # plt.hist(patients[:,0])
+
+    # Chest-pain type histogram
+    # plt.hist(patients[:, 2])
+
+    # Resting blood pressure (in mm Hg) with heart disease histogram
+    plt.hist(get_rows(patients, 13, 1)[:, 3])
+
+    # Resting blood pressure (in mm Hg) without heart disease histogram
+    plt.hist(get_rows(patients, 13, 0)[:, 3])
+
+    # Show any plots created
+    plt.show()
+
+def get_rows(data, feature, val):
+    '''
+        Gets rows of numpy array where feature matches value
+
+        Parameters:
+            data: original numpy array
+            feature: index of feature to be checked
+            val: expected value of feature
+    '''
+    return data[data[:, feature] == val, :]
 
 def read_file(fileName, n, features):
     '''
