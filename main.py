@@ -13,7 +13,6 @@ def main():
     fig, axs = plt.subplots(len(FEATURES), 1)
 
     for i in range(len(axs)):
-        # Feature without heart disease
         colors = ['orange', 'blue']
         labels = ['With heart disease', 'Without heart disease']
         axs[i].hist(get_samples(patients, 13, 0)[:, FEATURES[i]],
