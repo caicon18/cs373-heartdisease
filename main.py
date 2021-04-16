@@ -2,20 +2,30 @@
 
 """
 
-import numpy as np
 import math
+import numpy as np
+
 import matplotlib.pyplot as plt
 from matplotlib.ticker import PercentFormatter
+from mpl_toolkits.mplot3d import Axes3D
+import seaborn as sns
+
 from sklearn.neighbors import KNeighborsClassifier as KNN
 from sklearn.tree import DecisionTreeClassifier as DTC
-from sklearn.preprocessing import OneHotEncoder, RobustScaler
+from sklearn.preprocessing import OneHotEncoder, RobustScaler, Normalizer
 
 def main():
     # Get the first 14 features of 297 samples
     patients = read_file('processed.cleveland.data', 297, range(14))
     # patients = read_file('processed_test.data', 282, range(14))
+
+    # Binarize output column
+    patients[:,13] = np.where(patients[:,13] > 0, 1, 0)
+
+    # Shuffle input data
     np.random.shuffle(patients)
 
+    # Show predetermined graphs
     # display(patients)
 
     # Hyperparameter tuning of KNN approach
@@ -50,27 +60,29 @@ def trainAndTest(data, model):
             data (n samples x d features numpy array)
             model (sklearn-object)
     '''
+
+    # Preprocess data
+    n, _ = np.shape(data)
     X = data[:, :13]
+    y = data[:, 13]
+
     X_cat = X[:, [1, 2, 10, 11]]
     X_con = X[:, [0, 3, 4, 5, 6, 7, 8, 9, 12]]
-    y = data[:, 13]
-    n, d = np.shape(X)
-    folds = 5
-    z = np.zeros(folds)
 
     encoder = OneHotEncoder().fit(X_cat)
     X_cat = encoder.transform(X_cat).toarray()
+    X_con = RobustScaler().fit_transform(X_con)
+    X_con = Normalizer().fit_transform(X_con)
     X = np.hstack((X_con, X_cat))
 
-    scaler = RobustScaler()
-    X = scaler.fit_transform(X)
-
+    folds = 5
+    z = np.zeros(folds)
     for i in range(folds):
         a = math.ceil(i * n / folds)
-        b = math.floor((i + 1) * n / folds - 1)
+        b = math.floor((i + 1) * n / folds)
         T = np.arange(a, b, dtype=int)
         S = np.setdiff1d(np.arange(0, n), T)
-        X_train = X[S]
+        X_train = X[S, :]
         y_train = y[S]
         model.fit(X_train, y_train)
         for t in T:
@@ -82,7 +94,6 @@ def trainAndTest(data, model):
 
     return z
 
-
 def display(data):
     '''
         Displays various charts and graphs to analyze data
@@ -90,30 +101,46 @@ def display(data):
         Parameters:
             data (n samples x d features numpy array)
     '''
-    # Relevant histograms (Use features list to set histograms)
-    FEATURES = range(1, 2)
-    fig, axs = plt.subplots(len(FEATURES), 1)
 
-    # MatPlotLib caveat
-    if len(FEATURES) == 1:
-        axs = [axs]
+    # # 3D Plots
+    # X_0 = data[data[:, 13] == 0., :]
+    # X_1 = data[data[:, 13] == 1., :]
 
-    colors = ['orange', 'blue']
-    labels = ['With heart disease', 'Without heart disease']
-    for i in range(len(axs)):
-        axs[i].hist(get_samples(data, 13, 0)[:, FEATURES[i]],
-                    density=True, color=colors[0], label=labels[0])
-        axs[i].hist(get_samples(data, 13, 1)[:, FEATURES[i]],
-                    density=True, alpha=0.5, color=colors[1], label=labels[1])
-        axs[i].legend()
-        axs[i].set_xlabel('Value of Feature {}'.format(FEATURES[i] + 1))
-        axs[i].grid(True)
+    # sns.set(style='darkgrid')
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111, projection='3d')
+
+    # ax.scatter(X_0[:, 7], X_0[:, 0], X_0[:, 9], c='b')
+    # ax.scatter(X_1[:, 7], X_1[:, 0], X_1[:, 9], c='r')
+
+    # ax.set_xlabel('Maximum Heart Rate')
+    # ax.set_ylabel('Age')
+    # ax.set_zlabel('ST depression')
+
+    # Relevant histograms
+    fig, axs = plt.subplots()
+
+    # create_hist(axs, data, 0, "Age")
+    # create_hist(axs, data, 1, "Sex (1-Male, 0-Female)")
+    # create_hist(axs, data, 9, "Rest Blood Pressure (mm Hg)")
+    create_hist(axs, data, 7, "Maximum Heart Rate")
 
     # Show any plots created
     plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9,
                         top=0.9, wspace=0.4, hspace=0.4)
+
     plt.show()
 
+def create_hist(axs, data, feature, feature_label):
+    colors = ['orange', 'blue']
+    labels = ['With heart disease', 'Without heart disease']
+    axs.hist(get_samples(data, 13, 0)[:, feature],
+                density=True, color=colors[0], label=labels[0])
+    axs.hist(get_samples(data, 13, 1)[:, feature],
+                density=True, alpha=0.5, color=colors[1], label=labels[1])
+    axs.legend()
+    axs.set_xlabel(feature_label)
+    axs.grid(True)
 
 def get_samples(data, feature, val):
     '''
