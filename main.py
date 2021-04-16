@@ -8,17 +8,15 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import PercentFormatter
 from sklearn.neighbors import KNeighborsClassifier as KNN
 from sklearn.tree import DecisionTreeClassifier as DTC
-from sklearn.preprocessing import StandardScaler
-
+from sklearn.preprocessing import OneHotEncoder, RobustScaler
 
 def main():
-    process_file("cleveland.data", "processed_test.data")
-
     # Get the first 14 features of 297 samples
-    # patients = read_file('processed.cleveland.data', 297, range(14))
-    patients = read_file('processed_test.data', 282, range(14))
+    patients = read_file('processed.cleveland.data', 297, range(14))
+    # patients = read_file('processed_test.data', 282, range(14))
+    np.random.shuffle(patients)
 
-    display(patients)
+    # display(patients)
 
     # Hyperparameter tuning of KNN approach
     k_params = range(1,15)
@@ -33,11 +31,11 @@ def main():
     print("KNN error: {} with k = {}".format(min_error, min_k))
 
     # Hyperparameter tuning of Decision Tree approach 
-    max_depth_params = range(1,14)
+    max_depth_params = range(1, 14)
     min_max_depth = None
     min_error = 1
     for max_depth in max_depth_params:
-        tclf  = DTC(max_depth=max_depth)
+        tclf = DTC(max_depth=max_depth)
         error = np.mean(trainAndTest(patients, tclf))
         if error < min_error:
             min_error = error
@@ -53,12 +51,18 @@ def trainAndTest(data, model):
             model (sklearn-object)
     '''
     X = data[:, :13]
+    X_cat = X[:, [1, 2, 10, 11]]
+    X_con = X[:, [0, 3, 4, 5, 6, 7, 8, 9, 12]]
     y = data[:, 13]
     n, d = np.shape(X)
     folds = 5
     z = np.zeros(folds)
 
-    scaler = StandardScaler()
+    encoder = OneHotEncoder().fit(X_cat)
+    X_cat = encoder.transform(X_cat).toarray()
+    X = np.hstack((X_con, X_cat))
+
+    scaler = RobustScaler()
     X = scaler.fit_transform(X)
 
     for i in range(folds):
