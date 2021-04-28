@@ -12,6 +12,7 @@ import seaborn as sns
 
 from sklearn.neighbors import KNeighborsClassifier as KNN
 from sklearn.tree import DecisionTreeClassifier as DTC
+from sklearn.ensemble import BaggingClassifier as BC
 from sklearn.preprocessing import OneHotEncoder, RobustScaler, Normalizer
 
 def main():
@@ -46,7 +47,8 @@ def main():
     min_error = 1
     for max_depth in max_depth_params:
         tclf = DTC(max_depth=max_depth)
-        error = np.mean(trainAndTest(patients, tclf))
+        bclf = BC(tclf, max_samples=0.5, max_features=0.5)
+        error = np.mean(trainAndTest(patients, bclf))
         if error < min_error:
             min_error = error
             min_max_depth = max_depth
