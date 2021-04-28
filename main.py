@@ -66,15 +66,6 @@ def trainAndTest(data, model):
     X = data[:, :13]
     y = data[:, 13]
 
-    # X_cat = X[:, [1, 2, 10, 11]]  # catagorial variables
-    # X_con = X[:, [0, 3, 4, 5, 6, 7, 8, 9, 12]]  # continuous variables
-
-    # encoder = OneHotEncoder().fit(X_cat)
-    # X_cat = encoder.transform(X_cat).toarray()
-    # X_con = RobustScaler().fit_transform(X_con)
-    # X_con = Normalizer().fit_transform(X_con)
-    # X = np.hstack((X_con, X_cat))
-
     folds = 5
     z = np.zeros(folds)
     for i in range(folds):
