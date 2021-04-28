@@ -66,14 +66,14 @@ def trainAndTest(data, model):
     X = data[:, :13]
     y = data[:, 13]
 
-    X_cat = X[:, [1, 2, 10, 11]]
-    X_con = X[:, [0, 3, 4, 5, 6, 7, 8, 9, 12]]
+    # X_cat = X[:, [1, 2, 10, 11]]  # catagorial variables
+    # X_con = X[:, [0, 3, 4, 5, 6, 7, 8, 9, 12]]  # continuous variables
 
-    encoder = OneHotEncoder().fit(X_cat)
-    X_cat = encoder.transform(X_cat).toarray()
-    X_con = RobustScaler().fit_transform(X_con)
-    X_con = Normalizer().fit_transform(X_con)
-    X = np.hstack((X_con, X_cat))
+    # encoder = OneHotEncoder().fit(X_cat)
+    # X_cat = encoder.transform(X_cat).toarray()
+    # X_con = RobustScaler().fit_transform(X_con)
+    # X_con = Normalizer().fit_transform(X_con)
+    # X = np.hstack((X_con, X_cat))
 
     folds = 5
     z = np.zeros(folds)
@@ -82,17 +82,37 @@ def trainAndTest(data, model):
         b = math.floor((i + 1) * n / folds)
         T = np.arange(a, b, dtype=int)
         S = np.setdiff1d(np.arange(0, n), T)
+
         X_train = X[S, :]
+        X_train = preprocess(X_train)  # data preprocessing
         y_train = y[S]
+
         model.fit(X_train, y_train)
-        for t in T:
-            X_test = X[t, None]
-            y_test = model.predict(X_test)
-            if y[t] != y_test:
+
+        X_test = X[T, :]
+        X_test = preprocess(X_test)
+        y_expected = y[T]
+
+        for t in range(len(X_test)):
+            X_t = X_test[t, None]
+            y_test = model.predict(X_t)
+            if y_expected[t] != y_test:
                 z[i] += 1
         z[i] = z[i] / len(T)
 
     return z
+
+def preprocess(X):
+    X_cat = X[:, [1, 2, 10, 11]]  # catagorial variables
+    X_con = X[:, [0, 3, 4, 5, 6, 7, 8, 9, 12]]  # continuous variables
+
+    encoder = OneHotEncoder().fit(X_cat)
+    X_cat = encoder.transform(X_cat).toarray()
+    X_con = RobustScaler().fit_transform(X_con)
+    X_con = Normalizer().fit_transform(X_con)
+    X = np.hstack((X_con, X_cat))
+
+    return X
 
 def display(data):
     '''
