@@ -33,25 +33,33 @@ def main():
     k_params = range(1,15)
     min_k = None
     min_error = 1
+    roc = []
     for k in k_params:
         kclf = KNN(n_neighbors=k)
-        error = np.mean(trainAndTest(patients, kclf))
+        error, spec, sens = trainAndTest(patients, kclf)
+        error = np.mean(error)
+        roc.append([spec, sens])
         if error < min_error:
             min_error = error
             min_k = k
+    display_ROC(np.array(roc))
     print("KNN error: {} with k = {}".format(min_error, min_k))
 
     # Hyperparameter tuning of Decision Tree approach 
     max_depth_params = range(1, 14)
     min_max_depth = None
     min_error = 1
+    roc = []
     for max_depth in max_depth_params:
         tclf = DTC(max_depth=max_depth)
         bclf = BC(tclf, max_samples=0.5, max_features=0.5)
-        error = np.mean(trainAndTest(patients, bclf))
+        error, spec, sens = trainAndTest(patients, bclf)
+        error = np.mean(error)
+        roc.append([spec, sens])
         if error < min_error:
             min_error = error
             min_max_depth = max_depth
+    display_ROC(np.array(roc))
     print("Tree Classifier error: {} with max_depth = {}".format(min_error, min_max_depth))
 
 def trainAndTest(data, model):
@@ -62,6 +70,12 @@ def trainAndTest(data, model):
             data (n samples x d features numpy array)
             model (sklearn-object)
     '''
+
+    # ROC metrics
+    true_pos = 0
+    true_neg = 0
+    false_pos = 0
+    false_neg = 0
 
     # Preprocess data
     n, _ = np.shape(data)
@@ -76,8 +90,9 @@ def trainAndTest(data, model):
         T = np.arange(a, b, dtype=int)
         S = np.setdiff1d(np.arange(0, n), T)
 
+        # data preprocessing
         X_train = X[S, :]
-        X_train = preprocess(X_train)  # data preprocessing
+        X_train = preprocess(X_train)
         y_train = y[S]
 
         model.fit(X_train, y_train)
@@ -91,13 +106,25 @@ def trainAndTest(data, model):
             y_test = model.predict(X_t)
             if y_expected[t] != y_test:
                 z[i] += 1
+                if y_expected[t] == 1:
+                    false_neg += 1
+                else:
+                    false_pos += 1
+            else:
+                if y_expected[t] == 1:
+                    true_pos += 1
+                else:
+                    true_neg += 1
         z[i] = z[i] / len(T)
 
-    return z
+    sens = true_pos / (true_pos + false_neg)
+    spec = true_neg / (true_neg + false_pos)
+
+    return z, spec, sens
 
 def preprocess(X):
-    X_cat = X[:, [1, 2, 10, 11]]  # catagorial variables
-    X_con = X[:, [0, 3, 4, 5, 6, 7, 8, 9, 12]]  # continuous variables
+    X_cat = X[:, [1, 2, 10, 11]] # categorial variables
+    X_con = X[:, [0, 3, 4, 5, 6, 7, 8, 9, 12]] # continuous variables
 
     encoder = OneHotEncoder().fit(X_cat)
     X_cat = encoder.transform(X_cat).toarray()
@@ -142,6 +169,27 @@ def display(data):
     plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9,
                         top=0.9, wspace=0.4, hspace=0.4)
 
+    plt.show()
+
+def display_ROC(data):
+    '''
+        Displays ROC curve for various hyperparameters.
+
+        Parameters:
+            data (n samples x 2 (specificity and sensitivity))
+    '''
+
+    # Sort by specificity
+    data = data[data[:, 0].argsort()]
+
+    # Plot line chart
+    fig, axs = plt.subplots()
+    plt.scatter(data[:, 0], data[:, 1])
+    plt.title('ROC')
+    plt.xlabel('Specificity')
+    # plt.xlim([0, 1])
+    plt.ylabel('Sensitivity')
+    # plt.ylim([0, 1])
     plt.show()
 
 def create_hist(axs, data, feature, feature_label):
