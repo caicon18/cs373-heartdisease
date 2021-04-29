@@ -1,0 +1,25 @@
+How to run this code: 
+
+Python Version:
+    - you will need to run this code using Python 3
+
+Libraries: 
+
+    - numpy
+        $ pip install numpy
+    - matplotlib
+        $ pip install -U matplotlib
+    - sklearn
+        $ pip install -U scikit-learn
+    - seaborn
+        $ pip install seaborn
+
+        * Note if you run into the issue when installing seaborn 
+        "error: invalid command 'bdist_wheel'", run 'pip install wheel'.
+
+Running code: 
+
+    - To view the KNN error and Tree classifier error output in your terminal, 
+    simply run python3 main.py
+
+    - To view / not view graphical displays of the data, comment or uncomment line 27 in main.py
