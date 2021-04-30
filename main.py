@@ -142,11 +142,13 @@ def preprocess(X, encoder):
     X_con = X[:, CONTINUOUS] # continuous variables
 
 
-    X_cat = encoder.transform(X_cat).toarray()
+def preprocess(X, encoder):
+    X_cat = X[:, CATEGORICAL] # categorial variables
+    X_con = X[:, CONTINUOUS] # continuous variables
+
     X_con = RobustScaler().fit_transform(X_con)
     X_con = Normalizer().fit_transform(X_con)
     X = np.hstack((X_con, X_cat))
-
     return X
 
 def display(data):
