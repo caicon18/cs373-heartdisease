@@ -59,7 +59,7 @@ def main():
     for max_depth in max_depth_params:
         tclf = DTC(max_depth=max_depth)
         bclf = BC(tclf, max_samples=0.5, max_features=0.5)
-        # error, spec, sens, accuracy = trainAndTest(patients, bclf)
+        error, spec, sens, accuracy = trainAndTest(patients, bclf)
         error = np.mean(error)
         roc.append([spec, sens])
         if error < min_error:
