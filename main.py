@@ -37,33 +37,41 @@ def main():
     min_k = None
     min_error = 1
     roc = []
+    # accuracy = []
     for k in k_params:
         kclf = KNN(n_neighbors=k)
-        error, spec, sens = trainAndTest(patients, kclf)
+        error, spec, sens, acc = trainAndTest(patients, kclf)
         error = np.mean(error)
         roc.append([spec, sens])
         if error < min_error:
             min_error = error
             min_k = k
     # display_ROC(np.array(roc))
+    # kclf = KNN(14) # check knn accuracy w 14 folds
+    display_Accuracy(patients, kclf, "Sample Count vs Accuracy For KNN")
+    # print("accuracy is " + str(accuracy))
     print("KNN error: {} with k = {}".format(min_error, min_k))
 
-    # # Hyperparameter tuning of Decision Tree approach 
-    # max_depth_params = range(1, 14)
-    # min_max_depth = None
-    # min_error = 1
-    # roc = []
-    # for max_depth in max_depth_params:
-    #     tclf = DTC(max_depth=max_depth)
-    #     bclf = BC(tclf, max_samples=0.5, max_features=0.5)
-    #     error, spec, sens = trainAndTest(patients, bclf)
-    #     error = np.mean(error)
-    #     roc.append([spec, sens])
-    #     if error < min_error:
-    #         min_error = error
-    #         min_max_depth = max_depth
-    # # display_ROC(np.array(roc))
-    # print("Tree Classifier error: {} with max_depth = {}".format(min_error, min_max_depth))
+    # Hyperparameter tuning of Decision Tree approach 
+    max_depth_params = range(1, 14)
+    min_max_depth = None
+    min_error = 1
+    roc = []
+    for max_depth in max_depth_params:
+        tclf = DTC(max_depth=max_depth)
+        bclf = BC(tclf, max_samples=0.5, max_features=0.5)
+        # error, spec, sens, accuracy = trainAndTest(patients, bclf)
+        error = np.mean(error)
+        roc.append([spec, sens])
+        if error < min_error:
+            min_error = error
+            min_max_depth = max_depth
+    # display_ROC(np.array(roc))
+    # tclf = DTC(13) # check tree accuracy w 14 max depth
+    # bclf = BC(tclf, max_samples=0.5, max_features=0.5)
+    # display_Accuracy(patients, bclf, "Sample Count vs Accuracy For Decision Tree")
+    # print("accuracy is " + str(accuracy))
+    print("Tree Classifier error: {} with max_depth = {}".format(min_error, min_max_depth))
 
 def trainAndTest(data, model):
     '''
@@ -105,6 +113,8 @@ def trainAndTest(data, model):
         X_test = preprocess(X_test, encoder)
         y_expected = y[T]
 
+
+
         for t in range(len(X_test)):
             X_t = X_test[t, None]
             y_test = model.predict(X_t)
@@ -123,13 +133,19 @@ def trainAndTest(data, model):
 
     sens = true_pos / (true_pos + false_neg)
     spec = true_neg / (true_neg + false_pos)
+    accuracy = (true_pos + true_neg) / (true_pos + true_neg + false_neg + false_pos)
 
-    return z, spec, sens
+    return z, spec, sens, accuracy
 
 def preprocess(X, encoder):
     X_cat = X[:, CATEGORICAL] # categorial variables
     X_con = X[:, CONTINUOUS] # continuous variables
-    X_cat = encoder.transform(X_cat).toarray()
+
+
+def preprocess(X, encoder):
+    X_cat = X[:, CATEGORICAL] # categorial variables
+    X_con = X[:, CONTINUOUS] # continuous variables
+
     X_con = RobustScaler().fit_transform(X_con)
     X_con = Normalizer().fit_transform(X_con)
     X = np.hstack((X_con, X_cat))
@@ -192,6 +208,73 @@ def display_ROC(data):
     plt.ylabel('Sensitivity')
     # plt.ylim([0, 1])
     plt.show()
+
+def display_Accuracy(patients, model, title):
+
+    objects = ('10', '30', '50', '100')
+    y_pos = np.arange(len(objects))
+    accuracy = []
+
+    kclf = KNN(14) # Use model with all 14 folds to test accuracy
+
+    # get avg accuracy value for 30, 50, , 75, 100 samples across from subsets of dataset
+    
+    # get avg accuracy for 30 samples across subsets of dataset
+    prev_ind = 0
+    sample_avg = 0
+    i = 0
+    for t in range(29, 296, 30):
+        i = i + 1
+        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
+        prev_ind = t
+        sample_avg = (sample_avg + acc)
+
+    accuracy.append(sample_avg / i)
+
+
+    # get avg accuracy for 50 samples across subsets of dataset
+    prev_ind = 0
+    sample_avg = 0
+    i = 0
+    for t in range(49, 296, 50):
+        i = i + 1
+        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
+        prev_ind = t
+        sample_avg = (sample_avg + acc)
+        
+    accuracy.append(sample_avg / i)
+
+    # get avg accuracy for 75 samples across subsets of dataset
+    prev_ind = 0
+    sample_avg = 0
+    i = 0
+    for t in range(74, 296, 75):
+        i = i + 1
+        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
+        prev_ind = t
+        sample_avg = (sample_avg + acc)
+
+    accuracy.append(sample_avg / i)
+
+    # get avg accuracy for 100 samples across subsets of dataset
+    prev_ind = 0
+    sample_avg = 0
+    i = 0
+    for t in range(99, 296, 100):
+        i = i + 1
+        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
+        prev_ind = t
+        sample_avg = (sample_avg + acc)
+        
+    accuracy.append(sample_avg / i)
+
+    plt.bar(y_pos, accuracy, align='center', alpha=0.5)
+    plt.xticks(y_pos, objects)
+    plt.ylabel('Accuracy %')
+    plt.xlabel('# of samples')
+    plt.title(title)
+    plt.show()
+
 
 def create_hist(axs, data, feature, feature_label):
     colors = ['orange', 'blue']
