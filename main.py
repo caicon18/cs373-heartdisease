@@ -144,9 +144,13 @@ def trainAndTest(data, model):
 
         if sum_a != 0:
             tpr = [0., true_pos / (sum_a), 1.]
+        else:
+            tpr = [0., 1.]
         
         if sum_b != 0:
             fpr = [0., 1 - (true_neg / (sum_b)), 1.]
+        else:
+            fpr = [0., 1.]
         
         acc = (true_pos + true_neg) / (sum_a + sum_b)
 
