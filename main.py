@@ -143,6 +143,7 @@ def preprocess(X, encoder):
 
     X_con = RobustScaler().fit_transform(X_con)
     X_con = Normalizer().fit_transform(X_con)
+    X_cat = encoder.transform(X_cat).toarray()
     X = np.hstack((X_con, X_cat))
     return X
 
@@ -312,7 +313,7 @@ def read_file(fileName, n, features):
         for i in range(n):
             try:
                 # Convert each line into a numpy array of floats
-                vals = np.array(f.readline().split(',')).astype(np.float)
+                vals = np.array(f.readline().split(',')).astype(np.float64)
                 data[i] = vals[features]
             except ValueError:
                 # Discard line and warn of value error
