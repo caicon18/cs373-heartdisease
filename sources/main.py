@@ -21,8 +21,8 @@ CONTINUOUS = [0, 3, 4, 5, 6, 7, 8, 9, 12]
 
 def main():
     # Get the first 14 features of 297 samples
-    patients = read_file('processed.cleveland.data', 297, range(14))
-    # patients = read_file('processed_test.data', 282, range(14))
+    patients = read_file('dataset/processed.cleveland.data', 297, range(14))
+    # patients = read_file('dataset/processed_test.data', 282, range(14))
 
     # Binarize output column
     patients[:,13] = np.where(patients[:,13] > 0, 1, 0)

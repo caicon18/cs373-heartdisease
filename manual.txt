@@ -1,25 +1,55 @@
-How to run this code: 
+################
+ Python Version
+################
 
-Python Version:
-    - you will need to run this code using Python 3
+    This code was written and compiled using Python 3.6.9
 
-Libraries: 
+################
+ Dependencies
+################
 
-    - numpy
-        $ pip install numpy
-    - matplotlib
-        $ pip install -U matplotlib
-    - sklearn
-        $ pip install -U scikit-learn
-    - seaborn
-        $ pip install seaborn
+    All used python modules and their versions are listed in the
+    requirements.txt file.
+    
+    It's recommended that a python virtual environment
+    is used to avoid collisions with other versions. To
+    setup a python environment, run:
 
-        * Note if you run into the issue when installing seaborn 
-        "error: invalid command 'bdist_wheel'", run 'pip install wheel'.
+        $ python3 -m venv venv
 
-Running code: 
+    The environment can then be opened with the command:
 
-    - To view the KNN error and Tree classifier error output in your terminal, 
-    simply run python3 main.py
+        On Bash:
+        $ source venv/bin/activate
 
-    - To view / not view graphical displays of the data, comment or uncomment line 27 in main.py
+        On Windows Command Prompt:
+        $ ./venv/Scripts/activate
+
+    More can be read about python virtual environments here:
+        https://docs.python.org/3/tutorial/venv.html
+     
+    Once your environment is ready, the necessary modules can be
+    installed with the following command:
+    
+        $ pip install -r requirements.txt
+
+    * Note if you run into an issue with the installation of
+      seaborn, run the following command then try again:
+
+        $ pip install wheel
+
+################
+ Running code 
+################
+
+    All written code can be compiled and run with the following command
+    from the root directory:
+
+        $ python3 sources/main.py  
+
+    Upon running the command above, the errors of each classifier as well as
+    their found hyperparameter are output to the terminal.
+
+    Additionally, a few graphical displays may pop-up of the results.
+    Comments are left within the code, describing what can be commented /
+    uncommented for the desired graphical output.
