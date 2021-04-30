@@ -47,7 +47,7 @@ def main():
             min_error = error
             min_k = k
     # display_ROC(np.array(roc), "ROC for KNN")
-    kclf = KNN(14) # check knn accuracy w 14 folds
+    kclf = KNN(n_neighbors=14) # check knn accuracy w 14 folds
     display_Accuracy(patients, kclf, "Sample Count vs Accuracy For KNN")
     print("KNN error: {} with k = {}".format(min_error, min_k))
 
@@ -66,7 +66,7 @@ def main():
             min_error = error
             min_max_depth = max_depth
     # display_ROC(np.array(roc), "ROC for Decision Tree")
-    tclf = DTC(13) # check tree accuracy w 14 max depth
+    tclf = DTC(max_depth=14) # check tree accuracy w 14 max depth
     bclf = BC(tclf, max_samples=0.5, max_features=0.5)
     display_Accuracy(patients, bclf, "Sample Count vs Accuracy For Decision Tree")
     print("Tree Classifier error: {} with max_depth = {}".format(min_error, min_max_depth))
