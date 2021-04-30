@@ -46,7 +46,7 @@ def main():
         if error < min_error:
             min_error = error
             min_k = k
-    # display_ROC(np.array(roc))
+    display_ROC(np.array(roc), "ROC for KNN")
     kclf = KNN(14) # check knn accuracy w 14 folds
     display_Accuracy(patients, kclf, "Sample Count vs Accuracy For KNN")
     print("KNN error: {} with k = {}".format(min_error, min_k))
@@ -65,7 +65,7 @@ def main():
         if error < min_error:
             min_error = error
             min_max_depth = max_depth
-    # display_ROC(np.array(roc))
+    display_ROC(np.array(roc), "ROC for Decision Tree")
     tclf = DTC(13) # check tree accuracy w 14 max depth
     bclf = BC(tclf, max_samples=0.5, max_features=0.5)
     display_Accuracy(patients, bclf, "Sample Count vs Accuracy For Decision Tree")
@@ -182,7 +182,7 @@ def display(data):
 
     plt.show()
 
-def display_ROC(data):
+def display_ROC(data, title):
     '''
         Displays ROC curve for various hyperparameters.
 
@@ -195,9 +195,9 @@ def display_ROC(data):
 
     # Plot line chart
     fig, axs = plt.subplots()
-    plt.scatter(data[:, 0], data[:, 1])
-    plt.title('ROC')
-    plt.xlabel('Specificity')
+    plt.scatter(1 - data[:, 0], data[:, 1])
+    plt.title(title)
+    plt.xlabel('1 - Specificity')
     # plt.xlim([0, 1])
     plt.ylabel('Sensitivity')
     # plt.ylim([0, 1])
