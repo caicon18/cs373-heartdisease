@@ -10,6 +10,7 @@ from matplotlib.ticker import PercentFormatter
 from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
 
+from sklearn.metrics import auc, plot_roc_curve
 from sklearn.neighbors import KNeighborsClassifier as KNN
 from sklearn.tree import DecisionTreeClassifier as DTC
 from sklearn.ensemble import BaggingClassifier as BC
@@ -32,44 +33,59 @@ def main():
     # Show predetermined graphs
     # display(patients)
 
+    # ROC results
+    rocs = []
+
     # Hyperparameter tuning of KNN approach
-    k_params = range(1,15)
+    k_params = range(1,20)
     min_k = None
     min_error = 1
-    roc = []
-    # accuracy = []
+    tprs = []
+    aucs = []
+
     for k in k_params:
         kclf = KNN(n_neighbors=k)
-        error, spec, sens, acc = trainAndTest(patients, kclf)
+        error, k_tprs, k_aucs, _  = trainAndTest(patients, kclf)
         error = np.mean(error)
-        roc.append([spec, sens])
+        tprs = tprs + k_tprs
+        aucs = aucs + k_aucs
+
         if error < min_error:
             min_error = error
             min_k = k
-    # display_ROC(np.array(roc), "ROC for KNN")
-    kclf = KNN(n_neighbors=14) # check knn accuracy w 14 folds
-    display_Accuracy(patients, kclf, "Sample Count vs Accuracy For KNN")
+
+    rocs.append([tprs, aucs, (1, 0, 0), 'KNN'])
     print("KNN error: {} with k = {}".format(min_error, min_k))
 
     # Hyperparameter tuning of Decision Tree approach 
     max_depth_params = range(1, 14)
     min_max_depth = None
     min_error = 1
-    roc = []
+    tprs = []
+    aucs = []
+
     for max_depth in max_depth_params:
         tclf = DTC(max_depth=max_depth)
         bclf = BC(tclf, max_samples=0.5, max_features=0.5)
-        error, spec, sens, accuracy = trainAndTest(patients, bclf)
+        error, tprs, aucs, _ = trainAndTest(patients, bclf)
         error = np.mean(error)
-        roc.append([spec, sens])
+        tprs = tprs + k_tprs
+        aucs = aucs + k_aucs
+
         if error < min_error:
             min_error = error
             min_max_depth = max_depth
-    # display_ROC(np.array(roc), "ROC for Decision Tree")
+
+    rocs.append([tprs, aucs, (0, 0, 1), 'Tree Classifier'])
+    print("Tree Classifier error: {} with max_depth = {}".format(min_error, min_max_depth))
+
+    # Display results
+    kclf = KNN(n_neighbors=14) # check knn accuracy w 14 folds
+    display_Accuracy(patients, kclf, "Sample Count vs Accuracy For KNN")
     tclf = DTC(max_depth=14) # check tree accuracy w 14 max depth
     bclf = BC(tclf, max_samples=0.5, max_features=0.5)
     display_Accuracy(patients, bclf, "Sample Count vs Accuracy For Decision Tree")
-    print("Tree Classifier error: {} with max_depth = {}".format(min_error, min_max_depth))
+    display_ROC(rocs, "ROC Plot")
 
 def trainAndTest(data, model):
     '''
@@ -80,18 +96,19 @@ def trainAndTest(data, model):
             model (sklearn-object)
     '''
 
-    # ROC metrics
-    true_pos = 0
-    true_neg = 0
-    false_pos = 0
-    false_neg = 0
+    # Result metrics
+    tprs = []
+    aucs = []
+    accs = []
+    mean_fpr = np.linspace(0, 1, 100)
 
-    # Preprocess data
+    # Transform data and fit number of categories
     n, _ = np.shape(data)
     X = data[:, :13]
     y = data[:, 13]
     encoder = OneHotEncoder().fit(X[:, CATEGORICAL])
 
+    # Perform 5-fold cross-validation
     folds = 5
     z = np.zeros(folds)
     for i in range(folds):
@@ -100,40 +117,46 @@ def trainAndTest(data, model):
         T = np.arange(a, b, dtype=int)
         S = np.setdiff1d(np.arange(0, n), T)
 
-        # data preprocessing
+        # Preprocess training data
         X_train = X[S, :]
         X_train = preprocess(X_train, encoder)
         y_train = y[S]
 
+        # Train on taining data
         model.fit(X_train, y_train)
 
+        # Preprocess testing data
         X_test = X[T, :]
         X_test = preprocess(X_test, encoder)
-        y_expected = y[T]
+        y_test = y[T]
+    
+        # Predict and compare on testing data
+        y_pred = model.predict(X_test)
+        z[i] = np.sum(y_pred != y_test) / len(T)
 
+        false_pos = np.sum(np.logical_and(y_pred == 1, y_test == 0))
+        false_neg = np.sum(np.logical_and(y_pred == 0, y_test == 1))
+        true_pos = np.sum(np.logical_and(y_pred == 1, y_test == 1))
+        true_neg = np.sum(np.logical_and(y_pred == 0, y_test == 0))
+        
+        sum_a = true_pos + false_neg
+        sum_b = true_neg + false_pos
 
+        if sum_a != 0:
+            tpr = [0., true_pos / (sum_a), 1.]
+        
+        if sum_b != 0:
+            fpr = [0., 1 - (true_neg / (sum_b)), 1.]
+        
+        acc = (true_pos + true_neg) / (sum_a + sum_b)
 
-        for t in range(len(X_test)):
-            X_t = X_test[t, None]
-            y_test = model.predict(X_t)
-            if y_expected[t] != y_test:
-                z[i] += 1
-                if y_expected[t] == 1:
-                    false_neg += 1
-                else:
-                    false_pos += 1
-            else:
-                if y_expected[t] == 1:
-                    true_pos += 1
-                else:
-                    true_neg += 1
-        z[i] = z[i] / len(T)
+        interp_tpr = np.interp(mean_fpr, fpr, tpr)
+        interp_tpr[0] = 0.0
+        tprs.append(interp_tpr)
+        aucs.append(np.trapz(tpr, fpr))
+        accs.append(acc)
 
-    sens = true_pos / (true_pos + false_neg)
-    spec = true_neg / (true_neg + false_pos)
-    accuracy = (true_pos + true_neg) / (true_pos + true_neg + false_neg + false_pos)
-
-    return z, spec, sens, accuracy
+    return z, tprs, aucs, np.mean(accs)
 
 def preprocess(X, encoder):
     X_cat = X[:, CATEGORICAL] # categorial variables
@@ -144,6 +167,84 @@ def preprocess(X, encoder):
     X_cat = encoder.transform(X_cat).toarray()
     X = np.hstack((X_con, X_cat))
     return X
+
+def display_ROC(rocs, title):
+    '''
+        Displays ROC curve for various hyperparameters.
+
+        Parameters:
+            roc (n classifiers x 4 (true positivity rates,
+                                    area under curves,
+                                    color and name))
+    '''
+    mean_fpr = np.linspace(0, 1, 100)
+    for roc in rocs:
+        tprs = roc[0]
+        aucs = roc[1]
+        color = roc[2]
+        name = roc[3]
+
+        # Plot interpolated ROC line
+        mean_tpr = np.mean(tprs, axis=0)
+        mean_tpr[-1] = 1.0
+        mean_auc = auc(mean_fpr, mean_tpr)
+        std_auc = np.std(aucs)
+        plt.plot(mean_fpr, mean_tpr, color=color,
+                label=r'Mean ROC for %s (AUC = %0.2f $\pm$ %0.2f)' %
+                     (name, mean_auc, std_auc),
+                lw=2, alpha=.8)
+
+        # Plot area of std deviation
+        dev_color = (color[0], color[1], color[2], 0.25)
+        std_tpr = np.std(tprs, axis=0)
+        tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
+        tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
+        plt.fill_between(mean_fpr, tprs_lower, tprs_upper,
+                            color=dev_color, alpha=.2,
+                            label=r'%s$\pm$ 1 std. dev.' %
+                                    (name))
+
+    # Plot line of random classifier for ref
+    plt.plot([-.15, 1.15], [-.15, 1.15], color='black', lw=2)
+
+    plt.title(title)
+    plt.ylabel("Sensitivity")
+    plt.ylim([0, 1])
+    plt.xlabel("1 - Specification")
+    plt.xlim([0, 1])
+    plt.legend(loc="lower right")
+    plt.show()
+
+def display_Accuracy(patients, model, title):
+
+    objects = ('30', '40', '50', '75', '100', '150')
+    y_pos = np.arange(len(objects))
+    accuracy = []
+
+    # get avg accuracy value for 30, 40, 50, 75, 100, 150 samples
+    # across from subsets of dataset
+    
+    sample_sizes = [30, 40, 50, 75, 100, 150]
+
+    for sample_size in sample_sizes:
+        # get avg accuracy for 30 samples across subsets of dataset
+        prev_ind = 0
+        sample_avg = 0
+        i = 0
+        for t in range(sample_size - 1, 296, sample_size):
+            i = i + 1
+            error, _, _, acc = trainAndTest(patients[prev_ind:t,:], model)
+            prev_ind = t
+            sample_avg = (sample_avg + acc)
+
+        accuracy.append(sample_avg / i)
+
+    plt.bar(y_pos, accuracy, align='center', alpha=0.5)
+    plt.xticks(y_pos, objects)
+    plt.ylabel('Accuracy %')
+    plt.xlabel('# of samples')
+    plt.title(title)
+    plt.show()
 
 def display(data):
     '''
@@ -181,58 +282,6 @@ def display(data):
                         top=0.9, wspace=0.4, hspace=0.4)
 
     plt.show()
-
-def display_ROC(data, title):
-    '''
-        Displays ROC curve for various hyperparameters.
-
-        Parameters:
-            data (n samples x 2 (specificity and sensitivity))
-    '''
-
-    # Sort by specificity
-    data = data[data[:, 0].argsort()]
-
-    # Plot line chart
-    fig, axs = plt.subplots()
-    plt.scatter(1 - data[:, 0], data[:, 1])
-    plt.title(title)
-    plt.xlabel('1 - Specificity')
-    # plt.xlim([0, 1])
-    plt.ylabel('Sensitivity')
-    # plt.ylim([0, 1])
-    plt.show()
-
-def display_Accuracy(patients, model, title):
-
-    objects = ('30', '40', '50', '75', '100', '150')
-    y_pos = np.arange(len(objects))
-    accuracy = []
-
-    # get avg accuracy value for 30, 40, 50, 75, 100, 150 samples across from subsets of dataset
-    
-    sample_sizes = [30, 40, 50, 75, 100, 150]
-
-    for sample_size in sample_sizes:
-        # get avg accuracy for 30 samples across subsets of dataset
-        prev_ind = 0
-        sample_avg = 0
-        i = 0
-        for t in range(sample_size - 1, 296, sample_size):
-            i = i + 1
-            error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], model)
-            prev_ind = t
-            sample_avg = (sample_avg + acc)
-
-        accuracy.append(sample_avg / i)
-
-    plt.bar(y_pos, accuracy, align='center', alpha=0.5)
-    plt.xticks(y_pos, objects)
-    plt.ylabel('Accuracy %')
-    plt.xlabel('# of samples')
-    plt.title(title)
-    plt.show()
-
 
 def create_hist(axs, data, feature, feature_label):
     colors = ['orange', 'blue']
