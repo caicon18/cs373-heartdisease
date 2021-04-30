@@ -209,80 +209,22 @@ def display_Accuracy(patients, model, title):
     y_pos = np.arange(len(objects))
     accuracy = []
 
-    # get avg accuracy value for 30, 40, 50, 75, 100 samples across from subsets of dataset
+    # get avg accuracy value for 30, 40, 50, 75, 100, 150 samples across from subsets of dataset
     
-    # get avg accuracy for 30 samples across subsets of dataset
-    prev_ind = 0
-    sample_avg = 0
-    i = 0
-    for t in range(29, 296, 30):
-        i = i + 1
-        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], model)
-        prev_ind = t
-        sample_avg = (sample_avg + acc)
+    sample_sizes = [30, 40, 50, 75, 100, 150]
 
-    accuracy.append(sample_avg / i)
+    for sample_size in sample_sizes:
+        # get avg accuracy for 30 samples across subsets of dataset
+        prev_ind = 0
+        sample_avg = 0
+        i = 0
+        for t in range(sample_size - 1, 296, sample_size):
+            i = i + 1
+            error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
+            prev_ind = t
+            sample_avg = (sample_avg + acc)
 
-    # get avg accuracy for 40 samples across subsets of dataset
-    prev_ind = 0
-    sample_avg = 0
-    i = 0
-    for t in range(39, 296, 40):
-        i = i + 1
-        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], model)
-        prev_ind = t
-        sample_avg = (sample_avg + acc)
-
-    accuracy.append(sample_avg / i)
-
-
-    # get avg accuracy for 50 samples across subsets of dataset
-    prev_ind = 0
-    sample_avg = 0
-    i = 0
-    for t in range(49, 296, 50):
-        i = i + 1
-        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], model)
-        prev_ind = t
-        sample_avg = (sample_avg + acc)
-        
-    accuracy.append(sample_avg / i)
-
-    # get avg accuracy for 75 samples across subsets of dataset
-    prev_ind = 0
-    sample_avg = 0
-    i = 0
-    for t in range(74, 296, 75):
-        i = i + 1
-        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], model)
-        prev_ind = t
-        sample_avg = (sample_avg + acc)
-
-    accuracy.append(sample_avg / i)
-
-    # get avg accuracy for 100 samples across subsets of dataset
-    prev_ind = 0
-    sample_avg = 0
-    i = 0
-    for t in range(99, 296, 100):
-        i = i + 1
-        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], model)
-        prev_ind = t
-        sample_avg = (sample_avg + acc)
-        
-    accuracy.append(sample_avg / i)
-
-    # get avg accuracy for 150 samples across subsets of dataset
-    prev_ind = 0
-    sample_avg = 0
-    i = 0
-    for t in range(149, 296, 150):
-        i = i + 1
-        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], model)
-        prev_ind = t
-        sample_avg = (sample_avg + acc)
-        
-    accuracy.append(sample_avg / i)
+        accuracy.append(sample_avg / i)
 
     plt.bar(y_pos, accuracy, align='center', alpha=0.5)
     plt.xticks(y_pos, objects)
