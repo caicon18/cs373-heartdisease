@@ -15,6 +15,9 @@ from sklearn.tree import DecisionTreeClassifier as DTC
 from sklearn.ensemble import BaggingClassifier as BC
 from sklearn.preprocessing import OneHotEncoder, RobustScaler, Normalizer
 
+CATEGORICAL = [1, 2, 10, 11]
+CONTINUOUS = [0, 3, 4, 5, 6, 7, 8, 9, 12]
+
 def main():
     # Get the first 14 features of 297 samples
     patients = read_file('processed.cleveland.data', 297, range(14))
@@ -45,7 +48,7 @@ def main():
             min_k = k
     # display_ROC(np.array(roc))
     # kclf = KNN(14) # check knn accuracy w 14 folds
-    # display_Accuracy(patients, kclf, "Sample Count vs Accuracy For KNN")
+    display_Accuracy(patients, kclf, "Sample Count vs Accuracy For KNN")
     # print("accuracy is " + str(accuracy))
     print("KNN error: {} with k = {}".format(min_error, min_k))
 
@@ -89,6 +92,7 @@ def trainAndTest(data, model):
     n, _ = np.shape(data)
     X = data[:, :13]
     y = data[:, 13]
+    encoder = OneHotEncoder().fit(X[:, CATEGORICAL])
 
     folds = 5
     z = np.zeros(folds)
@@ -100,13 +104,13 @@ def trainAndTest(data, model):
 
         # data preprocessing
         X_train = X[S, :]
-        X_train = preprocess(X_train)
+        X_train = preprocess(X_train, encoder)
         y_train = y[S]
 
         model.fit(X_train, y_train)
 
         X_test = X[T, :]
-        X_test = preprocess(X_test)
+        X_test = preprocess(X_test, encoder)
         y_expected = y[T]
 
 
@@ -133,11 +137,11 @@ def trainAndTest(data, model):
 
     return z, spec, sens, accuracy
 
-def preprocess(X):
-    X_cat = X[:, [1, 2, 10, 11]] # categorial variables
-    X_con = X[:, [0, 3, 4, 5, 6, 7, 8, 9, 12]] # continuous variables
+def preprocess(X, encoder):
+    X_cat = X[:, CATEGORICAL] # categorial variables
+    X_con = X[:, CONTINUOUS] # continuous variables
 
-    encoder = OneHotEncoder().fit(X_cat)
+
     X_cat = encoder.transform(X_cat).toarray()
     X_con = RobustScaler().fit_transform(X_con)
     X_con = Normalizer().fit_transform(X_con)
@@ -205,44 +209,63 @@ def display_ROC(data):
 
 def display_Accuracy(patients, model, title):
 
-    objects = ('30', '50', '100')
+    objects = ('10', '30', '50', '100')
     y_pos = np.arange(len(objects))
     accuracy = []
 
-
     kclf = KNN(14) # Use model with all 14 folds to test accuracy
 
-    # get avg accuracy value for 30, 50, 100 samples across from subsets of dataset
+    # get avg accuracy value for 30, 50, , 75, 100 samples across from subsets of dataset
     
     # get avg accuracy for 30 samples across subsets of dataset
     prev_ind = 0
+    sample_avg = 0
+    i = 0
     for t in range(29, 296, 30):
+        i = i + 1
         error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
         prev_ind = t
+        sample_avg = (sample_avg + acc)
 
-        # calculate mean accuracy for this sample size
-        accuracy[0] = accuracy[0] / (t / 30)
+    accuracy.append(sample_avg / i)
 
 
-    # # get avg accuracy for 50 samples across subsets of dataset
-    # prev_ind = 0
-    # for t in range(49, 296, 50):
-    #     error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
-    #     prev_ind = t
+    # get avg accuracy for 50 samples across subsets of dataset
+    prev_ind = 0
+    sample_avg = 0
+    i = 0
+    for t in range(49, 296, 50):
+        i = i + 1
+        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
+        prev_ind = t
+        sample_avg = (sample_avg + acc)
+        
+    accuracy.append(sample_avg / i)
 
-    #     # calculate mean accuracy for this sample size
-    #     accuracy[1] = accuracy[1] / (t / 50)
+    # get avg accuracy for 75 samples across subsets of dataset
+    prev_ind = 0
+    sample_avg = 0
+    i = 0
+    for t in range(74, 296, 75):
+        i = i + 1
+        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
+        prev_ind = t
+        sample_avg = (sample_avg + acc)
 
-    # # get avg accuracy for 100 samples across subsets of dataset
-    # prev_ind = 0
-    # for t in range(99, 296, 100):
-    #     error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
-    #     prev_ind = t
+    accuracy.append(sample_avg / i)
 
-    #     # calculate mean accuracy for this sample size
-    #     accuracy[2] = accuracy[2] / (t / 10)
+    # get avg accuracy for 100 samples across subsets of dataset
+    prev_ind = 0
+    sample_avg = 0
+    i = 0
+    for t in range(99, 296, 100):
+        i = i + 1
+        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
+        prev_ind = t
+        sample_avg = (sample_avg + acc)
+        
+    accuracy.append(sample_avg / i)
 
-    accuracy = [80, 90, 75]
     plt.bar(y_pos, accuracy, align='center', alpha=0.5)
     plt.xticks(y_pos, objects)
     plt.ylabel('Accuracy %')
