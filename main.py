@@ -220,7 +220,7 @@ def display_Accuracy(patients, model, title):
         i = 0
         for t in range(sample_size - 1, 296, sample_size):
             i = i + 1
-            error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
+            error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], model)
             prev_ind = t
             sample_avg = (sample_avg + acc)
 
