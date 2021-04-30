@@ -1,5 +1,9 @@
-""""
+"""
+CS373 Project
 
+Authors: Harrison McCarty, Andrew Masek, Connor Cai
+Team #: 26
+Date submitted: 4/30/2021
 """
 
 import math
@@ -30,13 +34,14 @@ def main():
     # Shuffle input data
     np.random.shuffle(patients)
 
-    # Show predetermined graphs
+    # Shows simple visualizations of dataset
+    # CAN BE UNCOMMENTED TO SHOW SIMPLE VISUALIZATIONS
     # display(patients)
 
     # ROC results
     rocs = []
 
-    # Hyperparameter tuning of KNN approach
+    # Hyperparameter tuning of KNN classifier
     k_params = range(1,20)
     min_k = None
     min_error = 1
@@ -57,7 +62,7 @@ def main():
     rocs.append([tprs, aucs, (1, 0, 0), 'KNN'])
     print("KNN error: {} with k = {}".format(min_error, min_k))
 
-    # Hyperparameter tuning of Decision Tree approach 
+    # Hyperparameter tuning of Decision Tree classifier
     max_depth_params = range(1, 14)
     min_max_depth = None
     min_error = 1
@@ -79,21 +84,24 @@ def main():
     rocs.append([tprs, aucs, (0, 0, 1), 'Tree Classifier'])
     print("Tree Classifier error: {} with max_depth = {}".format(min_error, min_max_depth))
 
-    # Display results
-    kclf = KNN(n_neighbors=14) # check knn accuracy w 14 folds
-    display_Accuracy(patients, kclf, "Sample Count vs Accuracy For KNN")
-    tclf = DTC(max_depth=14) # check tree accuracy w 14 max depth
+    # Setup final classifiers based on hyperparameter tuning
+    kclf = KNN(n_neighbors=min_k)
+    tclf = DTC(max_depth=min_max_depth)
     bclf = BC(tclf, max_samples=0.5, max_features=0.5)
+
+    # Display final experimental results
+    # CAN BE COMMENTED TO HIDE EXPERIMENTAL RESULTS
+    display_Accuracy(patients, kclf, "Sample Count vs Accuracy For KNN")
     display_Accuracy(patients, bclf, "Sample Count vs Accuracy For Decision Tree")
     display_ROC(rocs, "ROC Plot")
 
 def trainAndTest(data, model):
     '''
-        Trains on data using model and tests using 5-fold-cross-validation
+    Trains on data using model and tests using 5-fold-cross-validation
 
-        Parameters:
-            data (n samples x d features numpy array)
-            model (sklearn-object)
+    Parameters:
+        data (n samples x d features numpy array)
+        model (sklearn-object)
     '''
 
     # Result metrics
@@ -119,7 +127,7 @@ def trainAndTest(data, model):
 
         # Preprocess training data
         X_train = X[S, :]
-        X_train = preprocess(X_train, encoder)
+        X_train = transform(X_train, encoder)
         y_train = y[S]
 
         # Train on taining data
@@ -127,7 +135,7 @@ def trainAndTest(data, model):
 
         # Preprocess testing data
         X_test = X[T, :]
-        X_test = preprocess(X_test, encoder)
+        X_test = transform(X_test, encoder)
         y_test = y[T]
     
         # Predict and compare on testing data
@@ -162,9 +170,16 @@ def trainAndTest(data, model):
 
     return z, tprs, aucs, np.mean(accs)
 
-def preprocess(X, encoder):
-    X_cat = X[:, CATEGORICAL] # categorial variables
-    X_con = X[:, CONTINUOUS] # continuous variables
+def transform(X, encoder):
+    '''
+        Normalizes continous variables and encodes discrete variables
+
+        Parameters:
+            X (n samples x d features numpy array)
+            encoder (sklearn one-hot-encoder object fitted to entire data)
+    '''
+    X_cat = X[:, CATEGORICAL]
+    X_con = X[:, CONTINUOUS]
 
     X_con = RobustScaler().fit_transform(X_con)
     X_con = Normalizer().fit_transform(X_con)
@@ -174,12 +189,12 @@ def preprocess(X, encoder):
 
 def display_ROC(rocs, title):
     '''
-        Displays ROC curve for various hyperparameters.
+    Displays ROC curve for various hyperparameters.
 
-        Parameters:
-            roc (n classifiers x 4 (true positivity rates,
-                                    area under curves,
-                                    color and name))
+    Parameters:
+        roc (n classifiers x 4 (true positivity rates,
+                                area under curves,
+                                color and name))
     '''
     mean_fpr = np.linspace(0, 1, 100)
     for roc in rocs:
@@ -219,30 +234,31 @@ def display_ROC(rocs, title):
     plt.legend(loc="lower right")
     plt.show()
 
-def display_Accuracy(patients, model, title):
+def display_Accuracy(data, model, title):
+    '''
+    Displays sample size versus accuracy curve
 
-    objects = ('30', '40', '50', '75', '100', '150')
-    y_pos = np.arange(len(objects))
+    Parameters:
+        data (n samples x d features)
+        model (scikit-learn model object)
+        title (string of plot title)
+    '''
     accuracy = []
-
-    # get avg accuracy value for 30, 40, 50, 75, 100, 150 samples
-    # across from subsets of dataset
-    
     sample_sizes = [30, 40, 50, 75, 100, 150]
 
     for sample_size in sample_sizes:
-        # get avg accuracy for 30 samples across subsets of dataset
         prev_ind = 0
         sample_avg = 0
         i = 0
         for t in range(sample_size - 1, 296, sample_size):
             i = i + 1
-            error, _, _, acc = trainAndTest(patients[prev_ind:t,:], model)
+            error, _, _, acc = trainAndTest(data[prev_ind:t,:], model)
             prev_ind = t
             sample_avg = (sample_avg + acc)
-
         accuracy.append(sample_avg / i)
 
+    objects = ('30', '40', '50', '75', '100', '150')
+    y_pos = np.arange(len(objects))
     plt.bar(y_pos, accuracy, align='center', alpha=0.5)
     plt.xticks(y_pos, objects)
     plt.ylabel('Accuracy %')
@@ -288,6 +304,15 @@ def display(data):
     plt.show()
 
 def create_hist(axs, data, feature, feature_label):
+    '''
+    Add simple histogram of feature to plot
+
+    Parameters:
+        axs (matplotlib axis to be added too)
+        data (n samples x d features numpy array)
+        feature (index of feature to be plotted)
+        feature_label (string of label for feature)
+    '''
     colors = ['orange', 'blue']
     labels = ['With heart disease', 'Without heart disease']
     axs.hist(get_samples(data, 13, 0)[:, feature],
@@ -300,28 +325,28 @@ def create_hist(axs, data, feature, feature_label):
 
 def get_samples(data, feature, val):
     '''
-        Gets samples of data where feature matches value
+    Gets samples of data where feature matches value
 
-        Parameters:
-            data: original numpy array
-            feature: index of feature to be checked
-            val: expected value of feature
+    Parameters:
+        data: original numpy array
+        feature: index of feature to be checked
+        val: expected value of feature
     '''
     return data[data[:, feature] == val, :]
 
 
 def read_file(fileName, n, features):
     '''
-        Reads data from a preprocessed file into a numpy array
+    Reads data from a preprocessed file into a numpy array
 
-        Parameters:
-            fileName: CSV file containing samples by row and features by comma
-            n: number of samples intended to read
-            features: list of features to be used
-                      (e.g. [0, 2, 4] would only get features 0, 2 and 4)
+    Parameters:
+        fileName: CSV file containing samples by row and features by comma
+        n: number of samples intended to read
+        features: list of features to be used
+                    (e.g. [0, 2, 4] would only get features 0, 2 and 4)
 
-        Returns:
-            data (n x len(features) numpy array): samples read from CSV file
+    Returns:
+        data (n x len(features) numpy array): samples read from CSV file
     '''
     data = np.zeros((n, len(features)))
     with open(fileName, 'r', encoding='ISO-8859-1') as f:
@@ -406,7 +431,6 @@ def process_file(readFilename, writeFilename):
 
     readFile.close()
     writeFile.close()
-
 
 if __name__ == "__main__":
     main()
