@@ -15,6 +15,9 @@ from sklearn.tree import DecisionTreeClassifier as DTC
 from sklearn.ensemble import BaggingClassifier as BC
 from sklearn.preprocessing import OneHotEncoder, RobustScaler, Normalizer
 
+CATEGORICAL = [1, 2, 10, 11]
+CONTINUOUS = [0, 3, 4, 5, 6, 7, 8, 9, 12]
+
 def main():
     # Get the first 14 features of 297 samples
     patients = read_file('processed.cleveland.data', 297, range(14))
@@ -42,25 +45,25 @@ def main():
         if error < min_error:
             min_error = error
             min_k = k
-    display_ROC(np.array(roc))
+    # display_ROC(np.array(roc))
     print("KNN error: {} with k = {}".format(min_error, min_k))
 
-    # Hyperparameter tuning of Decision Tree approach 
-    max_depth_params = range(1, 14)
-    min_max_depth = None
-    min_error = 1
-    roc = []
-    for max_depth in max_depth_params:
-        tclf = DTC(max_depth=max_depth)
-        bclf = BC(tclf, max_samples=0.5, max_features=0.5)
-        error, spec, sens = trainAndTest(patients, bclf)
-        error = np.mean(error)
-        roc.append([spec, sens])
-        if error < min_error:
-            min_error = error
-            min_max_depth = max_depth
-    display_ROC(np.array(roc))
-    print("Tree Classifier error: {} with max_depth = {}".format(min_error, min_max_depth))
+    # # Hyperparameter tuning of Decision Tree approach 
+    # max_depth_params = range(1, 14)
+    # min_max_depth = None
+    # min_error = 1
+    # roc = []
+    # for max_depth in max_depth_params:
+    #     tclf = DTC(max_depth=max_depth)
+    #     bclf = BC(tclf, max_samples=0.5, max_features=0.5)
+    #     error, spec, sens = trainAndTest(patients, bclf)
+    #     error = np.mean(error)
+    #     roc.append([spec, sens])
+    #     if error < min_error:
+    #         min_error = error
+    #         min_max_depth = max_depth
+    # # display_ROC(np.array(roc))
+    # print("Tree Classifier error: {} with max_depth = {}".format(min_error, min_max_depth))
 
 def trainAndTest(data, model):
     '''
@@ -81,6 +84,7 @@ def trainAndTest(data, model):
     n, _ = np.shape(data)
     X = data[:, :13]
     y = data[:, 13]
+    encoder = OneHotEncoder().fit(X[:, CATEGORICAL])
 
     folds = 5
     z = np.zeros(folds)
@@ -92,13 +96,13 @@ def trainAndTest(data, model):
 
         # data preprocessing
         X_train = X[S, :]
-        X_train = preprocess(X_train)
+        X_train = preprocess(X_train, encoder)
         y_train = y[S]
 
         model.fit(X_train, y_train)
 
         X_test = X[T, :]
-        X_test = preprocess(X_test)
+        X_test = preprocess(X_test, encoder)
         y_expected = y[T]
 
         for t in range(len(X_test)):
@@ -122,16 +126,13 @@ def trainAndTest(data, model):
 
     return z, spec, sens
 
-def preprocess(X):
-    X_cat = X[:, [1, 2, 10, 11]] # categorial variables
-    X_con = X[:, [0, 3, 4, 5, 6, 7, 8, 9, 12]] # continuous variables
-
-    encoder = OneHotEncoder().fit(X_cat)
+def preprocess(X, encoder):
+    X_cat = X[:, CATEGORICAL] # categorial variables
+    X_con = X[:, CONTINUOUS] # continuous variables
     X_cat = encoder.transform(X_cat).toarray()
     X_con = RobustScaler().fit_transform(X_con)
     X_con = Normalizer().fit_transform(X_con)
     X = np.hstack((X_con, X_cat))
-
     return X
 
 def display(data):
