@@ -46,7 +46,7 @@ def main():
         if error < min_error:
             min_error = error
             min_k = k
-    display_ROC(np.array(roc), "ROC for KNN")
+    # display_ROC(np.array(roc), "ROC for KNN")
     kclf = KNN(14) # check knn accuracy w 14 folds
     display_Accuracy(patients, kclf, "Sample Count vs Accuracy For KNN")
     print("KNN error: {} with k = {}".format(min_error, min_k))
@@ -65,7 +65,7 @@ def main():
         if error < min_error:
             min_error = error
             min_max_depth = max_depth
-    display_ROC(np.array(roc), "ROC for Decision Tree")
+    # display_ROC(np.array(roc), "ROC for Decision Tree")
     tclf = DTC(13) # check tree accuracy w 14 max depth
     bclf = BC(tclf, max_samples=0.5, max_features=0.5)
     display_Accuracy(patients, bclf, "Sample Count vs Accuracy For Decision Tree")
@@ -209,9 +209,7 @@ def display_Accuracy(patients, model, title):
     y_pos = np.arange(len(objects))
     accuracy = []
 
-    kclf = KNN(14) # Use model with all 14 folds to test accuracy
-
-    # get avg accuracy value for 30, 50, , 75, 100 samples across from subsets of dataset
+    # get avg accuracy value for 30, 40, 50, 75, 100 samples across from subsets of dataset
     
     # get avg accuracy for 30 samples across subsets of dataset
     prev_ind = 0
@@ -219,7 +217,7 @@ def display_Accuracy(patients, model, title):
     i = 0
     for t in range(29, 296, 30):
         i = i + 1
-        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
+        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], model)
         prev_ind = t
         sample_avg = (sample_avg + acc)
 
@@ -231,7 +229,7 @@ def display_Accuracy(patients, model, title):
     i = 0
     for t in range(39, 296, 40):
         i = i + 1
-        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
+        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], model)
         prev_ind = t
         sample_avg = (sample_avg + acc)
 
@@ -244,7 +242,7 @@ def display_Accuracy(patients, model, title):
     i = 0
     for t in range(49, 296, 50):
         i = i + 1
-        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
+        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], model)
         prev_ind = t
         sample_avg = (sample_avg + acc)
         
@@ -256,7 +254,7 @@ def display_Accuracy(patients, model, title):
     i = 0
     for t in range(74, 296, 75):
         i = i + 1
-        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
+        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], model)
         prev_ind = t
         sample_avg = (sample_avg + acc)
 
@@ -268,7 +266,7 @@ def display_Accuracy(patients, model, title):
     i = 0
     for t in range(99, 296, 100):
         i = i + 1
-        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
+        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], model)
         prev_ind = t
         sample_avg = (sample_avg + acc)
         
@@ -280,7 +278,7 @@ def display_Accuracy(patients, model, title):
     i = 0
     for t in range(149, 296, 150):
         i = i + 1
-        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
+        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], model)
         prev_ind = t
         sample_avg = (sample_avg + acc)
         
