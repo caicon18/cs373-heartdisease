@@ -47,9 +47,8 @@ def main():
             min_error = error
             min_k = k
     # display_ROC(np.array(roc))
-    # kclf = KNN(14) # check knn accuracy w 14 folds
+    kclf = KNN(14) # check knn accuracy w 14 folds
     display_Accuracy(patients, kclf, "Sample Count vs Accuracy For KNN")
-    # print("accuracy is " + str(accuracy))
     print("KNN error: {} with k = {}".format(min_error, min_k))
 
     # Hyperparameter tuning of Decision Tree approach 
@@ -67,10 +66,9 @@ def main():
             min_error = error
             min_max_depth = max_depth
     # display_ROC(np.array(roc))
-    # tclf = DTC(13) # check tree accuracy w 14 max depth
-    # bclf = BC(tclf, max_samples=0.5, max_features=0.5)
-    # display_Accuracy(patients, bclf, "Sample Count vs Accuracy For Decision Tree")
-    # print("accuracy is " + str(accuracy))
+    tclf = DTC(13) # check tree accuracy w 14 max depth
+    bclf = BC(tclf, max_samples=0.5, max_features=0.5)
+    display_Accuracy(patients, bclf, "Sample Count vs Accuracy For Decision Tree")
     print("Tree Classifier error: {} with max_depth = {}".format(min_error, min_max_depth))
 
 def trainAndTest(data, model):
@@ -207,7 +205,7 @@ def display_ROC(data):
 
 def display_Accuracy(patients, model, title):
 
-    objects = ('10', '30', '50', '100')
+    objects = ('30', '40', '50', '75', '100', '150')
     y_pos = np.arange(len(objects))
     accuracy = []
 
@@ -220,6 +218,18 @@ def display_Accuracy(patients, model, title):
     sample_avg = 0
     i = 0
     for t in range(29, 296, 30):
+        i = i + 1
+        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
+        prev_ind = t
+        sample_avg = (sample_avg + acc)
+
+    accuracy.append(sample_avg / i)
+
+    # get avg accuracy for 40 samples across subsets of dataset
+    prev_ind = 0
+    sample_avg = 0
+    i = 0
+    for t in range(39, 296, 40):
         i = i + 1
         error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
         prev_ind = t
@@ -257,6 +267,18 @@ def display_Accuracy(patients, model, title):
     sample_avg = 0
     i = 0
     for t in range(99, 296, 100):
+        i = i + 1
+        error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
+        prev_ind = t
+        sample_avg = (sample_avg + acc)
+        
+    accuracy.append(sample_avg / i)
+
+    # get avg accuracy for 150 samples across subsets of dataset
+    prev_ind = 0
+    sample_avg = 0
+    i = 0
+    for t in range(149, 296, 150):
         i = i + 1
         error, spec, sens, acc = trainAndTest(patients[prev_ind:t,:], kclf)
         prev_ind = t
